@@ -5,6 +5,7 @@ mod fft;
 use fft::{read_img, fft_2d};
 use std::env::args;
 
+
 fn main() {
 
     
@@ -12,7 +13,7 @@ fn main() {
 
     // load image and pipe into fft2d
     let mut img = read_img(&argv[1]);
-    fft_2d(&mut img);
+    fft_2d(img);
     
 }
 

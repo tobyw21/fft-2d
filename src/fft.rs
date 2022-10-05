@@ -4,12 +4,15 @@
 /// maths libs
 use libm;
 use num::complex::Complex;
+use rulinalg::matrix::{Matrix, BaseMatrix};
+extern crate minifb;
 
+use minifb::{Key, Window, WindowOptions};
 
 /// standard libs
 use std::f64::consts::PI;
 use std::i128;
-use std::io::Cursor;
+use std::io::{Cursor, Read};
 use core::default::Default;
 
 
@@ -21,6 +24,29 @@ use image::io::Reader as ImageReader;
 use image::imageops::FilterType::Nearest;
 use image::{GenericImage, Pixel, Pixels, DynamicImage};
 
+/*
+ *    +==========================+
+ *    |   macros!                |
+ *    +==========================+
+ */
+
+macro_rules! cmplx_new {
+    ($re: expr, $im: expr) => {
+        {
+            Complex::new($re, $im)
+        }
+    };
+}
+
+macro_rules! cmplx_push {
+    ($vec: expr; $re: expr, $im: expr) => {
+        $vec.push(cmplx_new!($re, $im));
+    };
+
+    ($vec: expr, $cmplx: expr) => {
+        $vec.push($cmplx);
+    }
+}
 
 /// open a image file
 /// return a dynamic image enum
@@ -51,7 +77,7 @@ fn is_base2(n: u32) -> bool {
 /// image: image object
 /// height: int
 /// width: int
-fn img_resize(img: &mut DynamicImage, height: &mut u32, width: &mut u32) {
+fn img_resize(img: DynamicImage, height: &mut u32, width: &mut u32) -> DynamicImage {
     let mut original_height = *height as f32;
     let mut original_width = *width as f32;
 
@@ -83,7 +109,7 @@ fn img_resize(img: &mut DynamicImage, height: &mut u32, width: &mut u32) {
     
     *height = new_height;
     *width = new_width;
-    img.resize(new_width, new_height, Nearest);
+    img.resize(new_width, new_height, Nearest)
 
 }
 
@@ -118,7 +144,7 @@ fn fft_1d(a: &mut Vec<Complex<f32>>, ifft: bool) {
         -1.0
     };
 
-    let wn: Complex<f32> = Complex::new((2.0 * (PI as f32) / n as f32).cos(),
+    let omega_n: Complex<f32> = Complex::new((2.0 * (PI as f32) / n as f32).cos(),
         im_conjugate * (2.0 * (PI as f32) / n as f32).sin());
     
     let mut omega = Complex::new(1.0, 0.0);
@@ -126,24 +152,77 @@ fn fft_1d(a: &mut Vec<Complex<f32>>, ifft: bool) {
     for i in (0..n >> 1) {
         a[i] = a1[i] + omega * a2[i];
         a[i + (n >> 1)] = a1[i] - omega * a2[i];
-        omega *= wn;
+        omega *= omega_n;
     }
     
 }
 
-pub fn fft_2d(img: &mut DynamicImage) {
+fn from_u8_rgb(r: u8, g: u8, b: u8) -> u32 {
+    let (r, g, b) = (r as u32, g as u32, b as u32);
+    (r << 16) | (g << 8) | b
+}
+
+pub fn fft_2d(img: DynamicImage) {
 
     let mut width = img.width();
     let mut height = img.height();
 
-
+    let mut new_img = img.clone();
     if !is_base2(width) || !is_base2(height) {
         println!("image dimensions must be in base of 2, currently {} x {}, resizing...", width, height);
-        img_resize(img, &mut width, &mut height);
-        println!("resized to {} x {}", width, height);
+        new_img = img_resize(img, &mut width, &mut height);
     }
 
+    println!("now {} x {}", new_img.width(), new_img.height());
 
+
+    /*
+    let n = (width * height) as usize;
+    dbg!(n);
+    let mut tmp_vec = 
+    new_img.as_rgb8()
+    .unwrap()
+    .to_vec()
+    .iter()
+    .map(|&x| x as f32 / 255f32)
+    .collect::<Vec<f32>>();
+    */
+
+    let mut tmp_vec = 
+    new_img.as_rgb8()
+    .unwrap()
+    .to_vec()
+    .iter()
+    .map(|&x| x as u32)
+    .collect::<Vec<u32>>();
+    ;
+
+
+    let mut window = Window::new(
+        "Test - ESC to exit",
+        256,
+        256,
+        WindowOptions {
+            resize: true,
+            ..WindowOptions::default()
+      }
+    ).unwrap_or_else(|e| {
+        panic!("{}", e);
+    });
+
+    window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
+    window.update_with_buffer(&tmp_vec, 256, 256)
+    .expect("unable to open window");
+    std::io::stdin().read(&mut [0]).unwrap();
+
+    /*
+    dbg!(tmp_vec.len());
+
+    let matrix = Matrix::new(n, 3, tmp_vec);
+
+    dbg!(matrix.row(1).col(1));
+    fft_1d(&mut tmp_vec, false);
+    */
 }
 
 /*
@@ -166,35 +245,10 @@ fn num_base2(n: u32) -> i32 {
 */
 
 /*
- *    +==========================+
- *    |   macros!                |
- *    +==========================+
- */
-
-macro_rules! cmplx_new {
-    ($re: expr, $im: expr) => {
-        {
-            Complex::new($re, $im)
-        }
-    };
-}
-
-macro_rules! cmplx_push {
-    ($vec: expr; $re: expr, $im: expr) => {
-        $vec.push(cmplx_new!($re, $im));
-    };
-
-    ($vec: expr, $cmplx: expr) => {
-        $vec.push($cmplx);
-    }
-}
-
-/*
  *   +==========================+
  *   |   test sections          |
  *   +==========================+
  */
-
 #[cfg(test)]
 mod test {
     use super::*;
