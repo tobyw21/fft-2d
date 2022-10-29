@@ -14,7 +14,7 @@ use std::f64::consts::PI;
 use std::i128;
 use std::io::{Cursor, Read};
 use core::default::Default;
-
+use std::ops::Div;
 
 /// libs for read images properly
 /// jpg, png has its own encoding
@@ -23,6 +23,7 @@ use core::default::Default;
 use image::io::Reader as ImageReader;
 use image::imageops::FilterType::Nearest;
 use image::{GenericImage, Pixel, Pixels, DynamicImage};
+
 
 /*
  *    +==========================+
@@ -55,10 +56,20 @@ pub fn read_img(filename: &str) -> DynamicImage {
     let mut img = ImageReader::open(filename)
     .expect("Unable to open img file")
     .decode()
-    .expect("unable to decode image")
-    ;
+    .expect("unable to decode image");
 
     img
+}
+
+/// restore complex number vector into f32 vector
+fn complex2f32(v: Vec<Complex<f32>>) -> Vec<f32> {
+    let mut vf32: Vec<f32> = Vec::new();
+    for i in v.iter() {
+        let changed: f32 = i.re / v.len() as f32;
+        vf32.push(changed);
+    }
+    drop(v);
+    vf32
 }
 
 /// check if given number is base of 2
@@ -114,6 +125,7 @@ fn img_resize(img: DynamicImage, height: &mut u32, width: &mut u32) -> DynamicIm
 }
 
 /// https://cs.uwaterloo.ca/~kogeddes/cs487/LectureMaterials/Chapter_4_Materials/FFTalgorithm.pdf
+/// http://paulbourke.net/miscellaneous/dft/
 /// this is for fft a 1 dimensional vector
 /// input
 /// a: vector of complex numbers with im part 0
@@ -150,10 +162,13 @@ fn fft_1d(a: &mut Vec<Complex<f32>>, ifft: bool) {
     let mut omega = Complex::new(1.0, 0.0);
 
     for i in (0..n >> 1) {
+        
+        
         a[i] = a1[i] + omega * a2[i];
         a[i + (n >> 1)] = a1[i] - omega * a2[i];
         omega *= omega_n;
     }
+    
     
 }
 
@@ -163,7 +178,39 @@ fn from_u8_rgb(r: u8, g: u8, b: u8) -> u32 {
 }
 
 pub fn fft_2d(img: DynamicImage) {
+    /*
+    let mut a = Vec::new();
+    cmplx_push!(a; 2.0, 0.0);
+    cmplx_push!(a; 3.0, 0.0);
+    cmplx_push!(a; 4.0, 0.0);
+    cmplx_push!(a; 5.0, 0.0);
+    
+    cmplx_push!(a; 1.0, 0.0);
+    cmplx_push!(a; 1.0, 0.0);
+    cmplx_push!(a; 1.0, 0.0);
+    cmplx_push!(a; 1.0, 0.0);
+    cmplx_push!(a; 2.0, 0.0);
+    cmplx_push!(a; 3.0, 0.0);
+    cmplx_push!(a; 4.0, 0.0);
+    cmplx_push!(a; 5.0, 0.0);
+    
+    cmplx_push!(a; 1.0, 0.0);
+    cmplx_push!(a; 1.0, 0.0);
+    cmplx_push!(a; 1.0, 0.0);
+    cmplx_push!(a; 1.0, 0.0);
 
+
+
+    fft_1d(&mut a, false);
+
+    fft_1d(&mut a, true);
+    let mut t = complex2f32(a);
+    for x in (0..t.len()) {
+        t[x] /= t.len() as f32;
+    }
+    dbg!(t);
+    */
+    
     let mut width = img.width();
     let mut height = img.height();
 
@@ -176,32 +223,65 @@ pub fn fft_2d(img: DynamicImage) {
     println!("now {} x {}", new_img.width(), new_img.height());
 
 
-    /*
+    
     let n = (width * height) as usize;
-    dbg!(n);
-    let mut tmp_vec = 
+
+
+
+    let mut rgb_vec = 
     new_img.as_rgb8()
     .unwrap()
     .to_vec()
     .iter()
-    .map(|&x| x as f32 / 255f32)
-    .collect::<Vec<f32>>();
-    */
+    .map(|&x| {
+    
+        cmplx_new!(x as f32, 0f32)
+    
+    })
+    .collect::<Vec<Complex<f32>>>();
+    
+    let mut r_vec = Vec::new();
+    let mut g_vec = Vec::new();
+    let mut b_vec = Vec::new();
 
-    let mut tmp_vec = 
-    new_img.as_rgb8()
-    .unwrap()
-    .to_vec()
-    .iter()
-    .map(|&x| x as u32)
-    .collect::<Vec<u32>>();
-    ;
+    for r in rgb_vec.iter().step_by(3) {
+        r_vec.push(r.to_owned());
+    }
+
+    for g in rgb_vec.iter().skip(1).step_by(3) {
+        g_vec.push(g.to_owned());
+    }
+
+    for b in rgb_vec.iter().skip(2).step_by(3) {
+        b_vec.push(b.to_owned());
+    }
+
+    fft_1d(&mut r_vec, false);
+    fft_1d(&mut g_vec, false);
+    fft_1d(&mut b_vec, false);
 
 
+    fft_1d(&mut r_vec, true);
+    fft_1d(&mut g_vec, true);
+    fft_1d(&mut b_vec, true);
+    
+
+    let r_f32 = complex2f32(r_vec);
+    let g_f32 = complex2f32(g_vec);
+    let b_f32 = complex2f32(b_vec);
+
+    //dbg!(&r_f32);
+
+    let mut display_vec = Vec::new();
+    for i in 0..n {
+        let r = from_u8_rgb(r_f32[i] as u8, g_f32[i] as u8, b_f32[i] as u8);
+        display_vec.push(r)
+    }
+    // set up window object for image display
     let mut window = Window::new(
         "Test - ESC to exit",
-        256,
-        256,
+        width as usize,
+        height as usize,
         WindowOptions {
             resize: true,
             ..WindowOptions::default()
@@ -210,39 +290,16 @@ pub fn fft_2d(img: DynamicImage) {
         panic!("{}", e);
     });
 
+    // open a window for display image, will be dropped after function out of scope
     window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
-    window.update_with_buffer(&tmp_vec, 256, 256)
+    window.update_with_buffer(&display_vec, width as usize, height as usize)
     .expect("unable to open window");
-    std::io::stdin().read(&mut [0]).unwrap();
-
-    /*
-    dbg!(tmp_vec.len());
-
-    let matrix = Matrix::new(n, 3, tmp_vec);
-
-    dbg!(matrix.row(1).col(1));
-    fft_1d(&mut tmp_vec, false);
-    */
-}
-
-/*
-fn num_base2(n: u32) -> i32 {
-    let mut result = 0;
-    let mut num = n;
     
-    while num != 1 {
-        if num % 2 == 0 {
-            result += 1;
-            num /= 2;
-        } else {
-            result = -1;
-            break;
-        }
-    }
+    // press any key to continue
+    let _ = std::io::stdin().read(&mut [0]).unwrap();
+    
 
-    result
 }
-*/
 
 /*
  *   +==========================+

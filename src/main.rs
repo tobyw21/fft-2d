@@ -8,7 +8,6 @@ use std::env::args;
 
 fn main() {
 
-    
     let argv: Vec<String> = args().collect();
 
     // load image and pipe into fft2d
