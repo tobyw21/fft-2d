@@ -259,7 +259,9 @@ pub fn fft_2d(img: DynamicImage) {
     fft_1d(&mut r_vec, false);
     fft_1d(&mut g_vec, false);
     fft_1d(&mut b_vec, false);
-
+    
+    // process img here
+    
 
     fft_1d(&mut r_vec, true);
     fft_1d(&mut g_vec, true);
