@@ -2,8 +2,9 @@
 
 
 /// maths libs
-use libm;
+use libm::{self, powf};
 use num::complex::Complex;
+use num::traits::Pow;
 use rulinalg::matrix::{Matrix, BaseMatrix};
 extern crate minifb;
 
@@ -70,6 +71,16 @@ fn complex2f32(v: Vec<Complex<f32>>) -> Vec<f32> {
     }
     drop(v);
     vf32
+}
+
+/// calculate the mod of complex number
+fn mod_complex(v: Vec<Complex<f32>>) -> Vec<f32> {
+    let mut rl32: Vec<f32> = Vec::new();
+    for i in v.iter() {
+        let moded_val = (i.re.powf(2.0) + i.im.powf(2.0)).sqrt();
+        rl32.push(moded_val);
+    }
+    rl32
 }
 
 /// check if given number is base of 2
@@ -262,7 +273,7 @@ pub fn fft_2d(img: DynamicImage) {
     
     // process img here
     
-
+    /*
     fft_1d(&mut r_vec, true);
     fft_1d(&mut g_vec, true);
     fft_1d(&mut b_vec, true);
@@ -271,8 +282,10 @@ pub fn fft_2d(img: DynamicImage) {
     let r_f32 = complex2f32(r_vec);
     let g_f32 = complex2f32(g_vec);
     let b_f32 = complex2f32(b_vec);
-
-    //dbg!(&r_f32);
+    */
+    let r_f32 = mod_complex(r_vec);
+    let g_f32 = mod_complex(g_vec);
+    let b_f32 = mod_complex(b_vec);
 
     let mut display_vec = Vec::new();
     for i in 0..n {
