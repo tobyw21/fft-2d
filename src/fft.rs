@@ -188,39 +188,32 @@ fn from_u8_rgb(r: u8, g: u8, b: u8) -> u32 {
     (r << 16) | (g << 8) | b
 }
 
-pub fn fft_2d(img: DynamicImage) {
-    /*
-    let mut a = Vec::new();
-    cmplx_push!(a; 2.0, 0.0);
-    cmplx_push!(a; 3.0, 0.0);
-    cmplx_push!(a; 4.0, 0.0);
-    cmplx_push!(a; 5.0, 0.0);
+pub fn display(width: u32, height: u32, display_vec: &Vec<u32>) {
+    // set up window object for image display
+    let mut window = Window::new(
+        "Display Image",
+        width as usize,
+        height as usize,
+        WindowOptions {
+            resize: true,
+            ..WindowOptions::default()
+      }
+    ).unwrap_or_else(|e| {
+        panic!("{}", e);
+    });
     
-    cmplx_push!(a; 1.0, 0.0);
-    cmplx_push!(a; 1.0, 0.0);
-    cmplx_push!(a; 1.0, 0.0);
-    cmplx_push!(a; 1.0, 0.0);
-    cmplx_push!(a; 2.0, 0.0);
-    cmplx_push!(a; 3.0, 0.0);
-    cmplx_push!(a; 4.0, 0.0);
-    cmplx_push!(a; 5.0, 0.0);
+    // open a window for display image, will be dropped after function out of scope
+    window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
+    window.update_with_buffer(&display_vec, width as usize, height as usize)
+    .expect("unable to open window");
     
-    cmplx_push!(a; 1.0, 0.0);
-    cmplx_push!(a; 1.0, 0.0);
-    cmplx_push!(a; 1.0, 0.0);
-    cmplx_push!(a; 1.0, 0.0);
+    // press any key to continue
+    println!("Press Any Key to Continue");
+    let _ = std::io::stdin().read(&mut [0]).unwrap();
 
+}
 
-
-    fft_1d(&mut a, false);
-
-    fft_1d(&mut a, true);
-    let mut t = complex2f32(a);
-    for x in (0..t.len()) {
-        t[x] /= t.len() as f32;
-    }
-    dbg!(t);
-    */
+pub fn fft_2d(img: DynamicImage, watermark: DynamicImage) {
     
     let mut width = img.width();
     let mut height = img.height();
@@ -232,12 +225,8 @@ pub fn fft_2d(img: DynamicImage) {
     }
 
     println!("now {} x {}", new_img.width(), new_img.height());
-
-
     
     let n = (width * height) as usize;
-
-
 
     let mut rgb_vec = 
     new_img.as_rgb8()
@@ -271,9 +260,66 @@ pub fn fft_2d(img: DynamicImage) {
     fft_1d(&mut g_vec, false);
     fft_1d(&mut b_vec, false);
     
-    // process img here
+
+    // process watermark
+    let mut watermark_rgb_vec = 
+    watermark.as_rgb8()
+    .unwrap()
+    .to_vec()
+    .iter()
+    .map(|&x| {
     
-    /*
+        cmplx_new!(x as f32, 0f32)
+    
+    })
+    .collect::<Vec<Complex<f32>>>();
+    
+    let mut watermark_r_vec = Vec::new();
+    let mut watermark_g_vec = Vec::new();
+    let mut watermark_b_vec = Vec::new();
+
+    for r in rgb_vec.iter().step_by(3) {
+        watermark_r_vec.push(r.to_owned());
+    }
+
+    for g in rgb_vec.iter().skip(1).step_by(3) {
+        watermark_g_vec.push(g.to_owned());
+    }
+
+    for b in rgb_vec.iter().skip(2).step_by(3) {
+        watermark_b_vec.push(b.to_owned());
+    }
+
+    // FFT
+    fft_1d(&mut r_vec, false);
+    fft_1d(&mut g_vec, false);
+    fft_1d(&mut b_vec, false);
+
+    fft_1d(&mut watermark_r_vec, false);
+    fft_1d(&mut watermark_g_vec, false);
+    fft_1d(&mut watermark_b_vec, false);
+
+    // process img here
+    for idx_r in 0..watermark_r_vec.len() {
+        r_vec[idx_r] *= 0.2;
+        r_vec[idx_r] += watermark_r_vec[idx_r] * 0.8;
+    }
+
+    for idx_g in 0..watermark_g_vec.len() {
+        g_vec[idx_g] *= 0.2;
+        g_vec[idx_g] += watermark_g_vec[idx_g] * 0.8;
+        // g_vec[idx_g].re /= 2.0;
+        // g_vec[idx_g].im /= 2.0;
+    }
+
+    for idx_b in 0..watermark_b_vec.len() {
+        b_vec[idx_b] *= 0.2;
+        b_vec[idx_b] += watermark_b_vec[idx_b] * 0.8;
+        // b_vec[idx_b].re /= 2.0;
+        // b_vec[idx_b].im /= 2.0;
+    }
+    
+    // IFFT
     fft_1d(&mut r_vec, true);
     fft_1d(&mut g_vec, true);
     fft_1d(&mut b_vec, true);
@@ -282,39 +328,22 @@ pub fn fft_2d(img: DynamicImage) {
     let r_f32 = complex2f32(r_vec);
     let g_f32 = complex2f32(g_vec);
     let b_f32 = complex2f32(b_vec);
-    */
-    let r_f32 = mod_complex(r_vec);
-    let g_f32 = mod_complex(g_vec);
-    let b_f32 = mod_complex(b_vec);
+    
+    // let r_f32 = mod_complex(r_vec);
+    // let g_f32 = mod_complex(g_vec);
+    // let b_f32 = mod_complex(b_vec);
 
     let mut display_vec = Vec::new();
     for i in 0..n {
         let r = from_u8_rgb(r_f32[i] as u8, g_f32[i] as u8, b_f32[i] as u8);
         display_vec.push(r)
     }
-    // set up window object for image display
-    let mut window = Window::new(
-        "Test - ESC to exit",
-        width as usize,
-        height as usize,
-        WindowOptions {
-            resize: true,
-            ..WindowOptions::default()
-      }
-    ).unwrap_or_else(|e| {
-        panic!("{}", e);
-    });
 
-    // open a window for display image, will be dropped after function out of scope
-    window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
-    window.update_with_buffer(&display_vec, width as usize, height as usize)
-    .expect("unable to open window");
-    
-    // press any key to continue
-    let _ = std::io::stdin().read(&mut [0]).unwrap();
+    display(width, height, &display_vec);
     
 
 }
+
 
 /*
  *   +==========================+
