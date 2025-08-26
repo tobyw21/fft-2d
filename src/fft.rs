@@ -1,12 +1,9 @@
-#![allow(unused)]
-
-
 /// maths libs
 use libm::{self, powf};
 use num::complex::Complex;
 use num::traits::Pow;
 use rulinalg::matrix::{Matrix, BaseMatrix};
-extern crate minifb;
+// extern crate minifb;
 
 use minifb::{Key, Window, WindowOptions};
 
@@ -21,7 +18,8 @@ use std::ops::Div;
 /// jpg, png has its own encoding
 /// need to parse the encoding
 /// inorder to get correct rbg vectors
-use image::io::Reader as ImageReader;
+// use image::io::Reader as ImageReader;
+use image::ImageReader;
 use image::imageops::FilterType::Nearest;
 use image::{GenericImage, Pixel, Pixels, DynamicImage};
 
@@ -202,7 +200,8 @@ pub fn display(width: u32, height: u32, display_vec: &Vec<u32>) {
     });
     
     // open a window for display image, will be dropped after function out of scope
-    window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
+    // window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
+    window.set_target_fps(60);
     window.update_with_buffer(&display_vec, width as usize, height as usize)
     .expect("unable to open window");
     

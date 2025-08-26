@@ -4,20 +4,30 @@ mod fft;
 
 use fft::{read_img, fft_2d};
 use std::env::args;
+use clap::Parser;
 
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+
+    #[arg(short, long)]
+    image: String,
+
+    #[arg(short, long)]
+    watermark: String
+
+}
 
 fn main() {
 
-    let argv: Vec<String> = args().collect();
+    let args = Args::parse();
 
-    if argv.len() == 3 {
-        // load image and pipe into fft2d
-        let mut img = read_img(&argv[1]);
-        let mut watermark = read_img(&argv[2]);
-        fft_2d(img, watermark);
-    } else {
-        eprintln!("Usage: {} <img> <watermark>", &argv[0]);
-    }
+
+    // load image and pipe into fft2d
+    let mut img = read_img(&args.image);
+    let mut watermark = read_img(&args.watermark);
+    fft_2d(img, watermark);
+
     
 }
 

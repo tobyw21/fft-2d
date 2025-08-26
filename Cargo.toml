@@ -6,8 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-num = "0.4.0"
-libm = "0.2.5"
-image = "0.24.4"
+# num = "0.4.0"
+# libm = "0.2.5"
+# image = "0.24.4"
+# rulinalg = "0.4.2"
+# minifb = "0.23"
+clap = { version = "4.5.45", features = ["derive"] }
+image = "0.25.6"
+libm = "0.2.15"
+minifb = "0.28.0"
+num = "0.4.3"
 rulinalg = "0.4.2"
-minifb = "0.23"
