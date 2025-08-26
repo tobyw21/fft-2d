@@ -20,34 +20,34 @@
 \usepackage[backend=biber,style=alphabetic,sorting=ynt]{biblatex}
 \addbibresource{cites.bib}
 
-
+\setlength {\marginparwidth }{2cm}
 \begin{document}
 	
-	\begin{titlepage}
+	% \begin{titlepage}
 		
-		\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
-		\centering
+	% 	\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+	% 	\centering
 		
-		\textsc{\LARGE University of New South Wales}\\[1.5cm]
-		\includegraphics[scale=0.8]{logo.PNG}\\[1cm]
-		\textsc{\Large COMP4121 - Project Report}\\[0.5cm] 
+	% 	\textsc{\LARGE University of New South Wales}\\[1.5cm]
+	% 	\includegraphics[scale=0.8]{logo.PNG}\\[1cm]
+	% 	\textsc{\Large COMP4121 - Project Report}\\[0.5cm] 
 		
-		\HRule \\[0.4cm]
-		{ \huge \bfseries Application of Fast Fourier Transformation on Image Processing}\\[0.4cm] 
-		\HRule \\[1.5cm]
+	% 	\HRule \\[0.4cm]
+	% 	{ \huge \bfseries Application of Fast Fourier Transformation on Image Processing}\\[0.4cm] 
+	% 	\HRule \\[1.5cm]
 		
 	
-		\begin{center}
-			\begin{tabular}{ c      c } 
-				Haoming Wang & z5270005
-			\end{tabular}
-		\end{center}
+	% 	\begin{center}
+	% 		\begin{tabular}{ c      c } 
+	% 			Haoming Wang & z5270005
+	% 		\end{tabular}
+	% 	\end{center}
 		
-		\vfill
-		{\large \today}\\[1cm] 
-		\vfill 
+	% 	\vfill
+	% 	{\large \today}\\[1cm] 
+	% 	\vfill 
 		
-	\end{titlepage}
+	% \end{titlepage}
 	
 	\begin{abstract}
 		DFT (Discrete Fourier Transformation) is a mathematics concept that converts a finite sequence of equally spaced samples of a function into same length sequence of equally spaced samples which will result in a complex valued function of frequency, on top of the result of transformation, operations can be performed, such as, to eliminate noise in signal wave, compression of the image.
@@ -379,32 +379,32 @@
 			
 			Additionally, in the source code, in fft\_2d function, the ratio of opacity can be adjusted, currently the ratio between watermark and original picture is 2:8, but it can be adjusted according to user's preference. The higher watermark ratio is, the more unclear original picture will be, and a small shadow of the watermark can be shown in the middle of the image.
 			
-			\begin{figure}[H]
-				\caption{Ratio in Implementation of FFT-2D}
-				\centering
-				\includegraphics[scale=0.8]{fft2dimpl.JPG}\\[1cm]
-			\end{figure}
+			% \begin{figure}[H]
+			% 	\caption{Ratio in Implementation of FFT-2D}
+			% 	\centering
+			% 	\includegraphics[scale=0.8]{fft2dimpl.JPG}\\[1cm]
+			% \end{figure}
 		
 		
-			\begin{figure}[H]
-				\caption{Final Effect and Test Run on CSE}
-				\centering
-				\includegraphics[scale=0.8]{testruncse.JPG}\\[1cm]
-			\end{figure}
-		
-			
-			\begin{figure}[H]
-				\caption{Sample Picture Used}
-				\centering
-				\includegraphics[scale=0.8]{samplepic.JPG}\\[1cm]
-			\end{figure}
+			% \begin{figure}[H]
+			% 	\caption{Final Effect and Test Run on CSE}
+			% 	\centering
+			% 	\includegraphics[scale=0.8]{testruncse.JPG}\\[1cm]
+			% \end{figure}
 		
 			
-			\begin{figure}[H]
-				\caption{Sample Watermark Used}
-				\centering
-				\includegraphics[scale=0.8]{watermark.JPG}\\[1cm]
-			\end{figure}
+			% \begin{figure}[H]
+			% 	\caption{Sample Picture Used}
+			% 	\centering
+			% 	\includegraphics[scale=0.8]{samplepic.JPG}\\[1cm]
+			% \end{figure}
+		
+			
+			% \begin{figure}[H]
+			% 	\caption{Sample Watermark Used}
+			% 	\centering
+			% 	\includegraphics[scale=0.8]{watermark.JPG}\\[1cm]
+			% \end{figure}
 			
 	
 		\subsection{Setup and Build Information}

@@ -69,7 +69,6 @@ fn complex2f32(v: Vec<Complex<f32>>) -> Vec<f32> {
         let changed: f32 = i.re / v.len() as f32;
         vf32.push(changed);
     }
-    drop(v);
     vf32
 }
 
