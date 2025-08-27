@@ -1,58 +1,33 @@
 /// maths libs
-use libm::{self, powf};
 use num::complex::Complex;
-use num::traits::Pow;
-use rulinalg::matrix::{BaseMatrix, Matrix};
-// extern crate minifb;
-
-use minifb::{Key, Window, WindowOptions};
-
 use core::default::Default;
 use std::error::Error;
 /// standard libs
 use std::f64::consts::PI;
-use std::fmt::Display;
-use std::i128;
-use std::io::{Cursor, Read};
-use std::ops::Div;
+use std::io::Read;
 use std::vec;
-
-use image::imageops::FilterType::Nearest;
 /// libs for read images properly
 /// jpg, png has its own encoding
 /// need to parse the encoding
 /// inorder to get correct rbg vectors
-// use image::io::Reader as ImageReader;
+use minifb::{Window, WindowOptions};
+use image::imageops::FilterType::Nearest;
+use image::DynamicImage;
 use image::ImageReader;
-use image::{DynamicImage, GenericImage, Pixel, Pixels};
 
-/*
- *    +==========================+
- *    |   macros!                |
- *    +==========================+
- */
 
+/// macro for new a complex number
 macro_rules! cmplx_new {
     ($re: expr, $im: expr) => {{
         Complex::new($re, $im)
     }};
 }
 
-macro_rules! cmplx_push {
-    ($vec: expr; $re: expr, $im: expr) => {
-        $vec.push(cmplx_new!($re, $im));
-    };
-
-    ($vec: expr, $cmplx: expr) => {
-        $vec.push($cmplx);
-    };
-}
-
 /// open a image file
 /// return a dynamic image enum
 /// input: filename
 pub fn read_img(filename: &str) -> Result<DynamicImage, String> {
-    let mut img = match ImageReader::open(filename) {
+    let img = match ImageReader::open(filename) {
         Ok(img) => img,
         Err(e) => {
             return Err(e.to_string());
@@ -68,29 +43,9 @@ pub fn read_img(filename: &str) -> Result<DynamicImage, String> {
     Ok(decoded_img)
 }
 
-/// restore complex number vector into f64 vector
-fn complex2f64(v: Vec<Complex<f64>>) -> Vec<f64> {
-    let mut vf64: Vec<f64> = Vec::new();
-    for i in v.iter() {
-        let changed: f64 = i.re / v.len() as f64;
-        vf64.push(changed);
-    }
-    vf64
-}
-
-/// calculate the mod of complex number
-fn mod_complex(v: Vec<Complex<f64>>) -> Vec<f64> {
-    let mut rl32: Vec<f64> = Vec::new();
-    for i in v.iter() {
-        let moded_val = (i.re.powf(2.0) + i.im.powf(2.0)).sqrt();
-        rl32.push(moded_val);
-    }
-    rl32
-}
-
 /// check if given number is base of 2
 /// input n: int
-fn is_base2(n: u32) -> bool {
+pub fn is_base2(n: u32) -> bool {
     if (n & (n - 1)) == 0 {
         true
     } else {
@@ -104,9 +59,9 @@ fn is_base2(n: u32) -> bool {
 /// image: image object
 /// height: int
 /// width: int
-fn img_resize(img: DynamicImage, height: &mut u32, width: &mut u32) -> DynamicImage {
-    let mut original_height = *height as f64;
-    let mut original_width = *width as f64;
+pub fn img_resize(img: &DynamicImage, height: u32, width: u32) -> DynamicImage {
+    let mut original_height = height as f32;
+    let mut original_width = width as f32;
 
     let mut new_height = 2;
     let mut new_width = 2;
@@ -134,9 +89,59 @@ fn img_resize(img: DynamicImage, height: &mut u32, width: &mut u32) -> DynamicIm
         counter_r -= 1;
     }
 
-    *height = new_height;
-    *width = new_width;
+
     img.resize(new_width, new_height, Nearest)
+}
+
+
+fn from_u8_rgb(r: u8, g: u8, b: u8) -> u32 {
+    let (r, g, b) = (r as u32, g as u32, b as u32);
+    (r << 16) | (g << 8) | b
+}
+
+
+/// restore complex number vector into f64 vector
+fn complex2f64(v: Vec<Complex<f64>>) -> Vec<f64> {
+    let mut vf64: Vec<f64> = Vec::new();
+    for i in v.iter() {
+        let changed: f64 = i.re / v.len() as f64;
+        vf64.push(changed);
+    }
+    vf64
+}
+
+/// calculate the mod of complex number
+// fn mod_complex(v: Vec<Complex<f64>>) -> Vec<f64> {
+//     let mut rl32: Vec<f64> = Vec::new();
+//     for i in v.iter() {
+//         let moded_val = (i.re.powf(2.0) + i.im.powf(2.0)).sqrt();
+//         rl32.push(moded_val);
+//     }
+//     rl32
+// }
+
+pub trait DisplayImage {
+    fn display(&self, w: u32, h: u32) -> Result<(), Box<dyn Error>>;
+}
+
+impl DisplayImage for Vec<u32> {
+    fn display(&self, w: u32, h: u32) -> Result<(), Box<dyn Error>> {
+        let mut window = Window::new(
+            "Display image",
+            w as usize,
+            h as usize,
+            WindowOptions {
+                resize: true,
+                ..WindowOptions::default()
+            },
+        )?;
+        window.set_target_fps(60);
+        window.update_with_buffer(self, w as usize, h as usize)?;
+
+        println!("Press Any Key to Continue");
+        let _ = std::io::stdin().read(&mut [0]).unwrap();
+        Ok(())
+    }
 }
 
 /// https://cs.uwaterloo.ca/~kogeddes/cs487/LectureMaterials/Chapter_4_Materials/FFTalgorithm.pdf
@@ -173,60 +178,23 @@ fn fft_1d(a: &mut Vec<Complex<f64>>, ifft: bool) {
 
     let mut omega = Complex::new(1.0, 0.0);
 
-    for i in (0..n >> 1) {
+    for i in 0..n >> 1 {
         a[i] = a1[i] + omega * a2[i];
         a[i + (n >> 1)] = a1[i] - omega * a2[i];
         omega *= omega_n;
     }
 }
 
-fn from_u8_rgb(r: u8, g: u8, b: u8) -> u32 {
-    let (r, g, b) = (r as u32, g as u32, b as u32);
-    (r << 16) | (g << 8) | b
-}
-
-trait DisplayImage {
-    fn display(&self, w: u32, h: u32) -> Result<(), Box<dyn Error>>;
-}
-
-impl DisplayImage for Vec<u32> {
-    fn display(&self, w: u32, h: u32) -> Result<(), Box<dyn Error>> {
-        let mut window = Window::new(
-            "Display image",
-            w as usize,
-            h as usize,
-            WindowOptions {
-                resize: true,
-                ..WindowOptions::default()
-            },
-        )?;
-        window.set_target_fps(60);
-        window.update_with_buffer(self, w as usize, h as usize)?;
-
-        println!("Press Any Key to Continue");
-        let _ = std::io::stdin().read(&mut [0]).unwrap();
-        Ok(())
-    }
-}
 
 pub fn fft_2d(img: DynamicImage, watermark: DynamicImage) {
-    let mut width = img.width();
-    let mut height = img.height();
+    let width = img.width();
+    let height = img.height();
 
-    let mut new_img = img.clone();
-    if !is_base2(width) || !is_base2(height) {
-        println!(
-            "image dimensions must be in base of 2, currently {} x {}, resizing...",
-            width, height
-        );
-        new_img = img_resize(img, &mut width, &mut height);
-    }
-
-    println!("now {} x {}", new_img.width(), new_img.height());
+    let new_img = img.clone();
 
     let n = (width * height) as usize;
 
-    let mut rgb_vec = new_img
+    let rgb_vec = new_img
         .as_rgb8()
         .unwrap()
         .to_vec()
@@ -255,7 +223,7 @@ pub fn fft_2d(img: DynamicImage, watermark: DynamicImage) {
     fft_1d(&mut b_vec, false);
 
     // process watermark
-    let mut watermark_rgb_vec = watermark
+    let watermark_rgb_vec = watermark
         .as_rgb8()
         .unwrap()
         .to_vec()
@@ -267,7 +235,7 @@ pub fn fft_2d(img: DynamicImage, watermark: DynamicImage) {
     let mut watermark_g_vec = Vec::new();
     let mut watermark_b_vec = Vec::new();
 
-    for r in rgb_vec.iter().step_by(3) {
+    for r in watermark_rgb_vec.iter().step_by(3) {
         watermark_r_vec.push(r.to_owned());
     }
 
@@ -289,21 +257,22 @@ pub fn fft_2d(img: DynamicImage, watermark: DynamicImage) {
     fft_1d(&mut watermark_b_vec, false);
 
     // process img here
+    // do a blending of original image and a watermark image
     for idx_r in 0..watermark_r_vec.len() {
-        r_vec[idx_r] *= 0.2;
-        r_vec[idx_r] += watermark_r_vec[idx_r] * 0.8;
+        r_vec[idx_r] *= 0.2f64;
+        r_vec[idx_r] += watermark_r_vec[idx_r] * 0.8f64;
     }
 
     for idx_g in 0..watermark_g_vec.len() {
-        g_vec[idx_g] *= 0.2;
-        g_vec[idx_g] += watermark_g_vec[idx_g] * 0.8;
+        g_vec[idx_g] *= 0.2f64;
+        g_vec[idx_g] += watermark_g_vec[idx_g] * 0.8f64;
         // g_vec[idx_g].re /= 2.0;
         // g_vec[idx_g].im /= 2.0;
     }
 
     for idx_b in 0..watermark_b_vec.len() {
-        b_vec[idx_b] *= 0.2;
-        b_vec[idx_b] += watermark_b_vec[idx_b] * 0.8;
+        b_vec[idx_b] *= 0.2f64;
+        b_vec[idx_b] += watermark_b_vec[idx_b] * 0.8f64;
         // b_vec[idx_b].re /= 2.0;
         // b_vec[idx_b].im /= 2.0;
     }
@@ -326,14 +295,30 @@ pub fn fft_2d(img: DynamicImage, watermark: DynamicImage) {
         let r = from_u8_rgb(r_f64[i] as u8, g_f64[i] as u8, b_f64[i] as u8);
         display_vec.push(r)
     }
-
+    
     // display(width, height, &display_vec);
-    let _ = display_vec.display(width, height);
+    match display_vec.display(width, height) {
+        Ok(()) => (),
+        Err(e) => {
+            eprintln!("Error {}", e);
+        }
+    }
 }
+
 
 #[cfg(test)]
 mod test {
     use super::*;
+
+    macro_rules! cmplx_push {
+        ($vec: expr; $re: expr, $im: expr) => {
+            $vec.push(cmplx_new!($re, $im));
+        };
+
+        ($vec: expr, $cmplx: expr) => {
+            $vec.push($cmplx);
+        };
+    }
     #[test]
     fn test_is_base2() {
         assert_eq!(is_base2(8), true);
