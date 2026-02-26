@@ -1,5 +1,7 @@
-doc:
-	ps2pdf doc/docs.ps
+doc: FORCE
+	ps2pdf doc/docs.ps doc/docs.pdf
+
+FORCE: ;
 
 .PHONY: clean
 
