@@ -1,7 +1,7 @@
 doc:
-	latexmk -pdf report/report.tex --outdir=report
+	ps2pdf doc/docs.ps
 
 .PHONY: clean
 
 clean:
-	find report -maxdepth 1 -type f | grep -v report.tex | tee | grep report | xargs rm
+	find doc/docs.pdf -maxdepth 1 -type f -exec rm '{}' \;
