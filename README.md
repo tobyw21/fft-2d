@@ -1,7 +1,10 @@
 # fft-2d
-apply fft on image processing
+Apply fft on image processing.
 
-Build and Run
-==============
-To run, on current directory level,
-`cargo run -- <img> <watermark>`
+Current project, implementations and explainations is in `docs/`.
+
+This project has not been maintained for long time, I am planning to expand the project
+by: 
+- OpenGL
+- Multithreading
+- Graphic pipeline
